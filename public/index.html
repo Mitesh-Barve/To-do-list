@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do App</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .todo { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>To-Do List</h1>
+    <input type="text" id="newTodo" placeholder="Enter a new task">
+    <button onclick="addTodo()">Add</button>
+    <ul id="todoList"></ul>
+
+    <script>
+        async function fetchTodos() {
+            const response = await fetch('http://localhost:3000/todos');
+            const todos = await response.json();
+            const todoList = document.getElementById('todoList');
+            todoList.innerHTML = '';
+            todos.forEach(todo => {
+                const li = document.createElement('li');
+                li.className = 'todo';
+                li.innerHTML = `
+                    <input type="checkbox" ${todo.completed ? 'checked' : ''} 
+                        onchange="toggleComplete('${todo._id}', this.checked)">
+                    ${todo.task}
+                    <button onclick="deleteTodo('${todo._id}')">Delete</button>
+                `;
+                todoList.appendChild(li);
+            });
+        }
+
+        async function addTodo() {
+            const newTodo = document.getElementById('newTodo').value;
+            await fetch('http://localhost:3000/todos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ task: newTodo }),
+            });
+            document.getElementById('newTodo').value = '';
+            fetchTodos();
+        }
+
+        async function toggleComplete(id, completed) {
+            await fetch(`http://localhost:3000/todos/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ completed }),
+            });
+            fetchTodos();
+        }
+
+        async function deleteTodo(id) {
+            await fetch(`http://localhost:3000/todos/${id}`, {
+                method: 'DELETE',
+            });
+            fetchTodos();
+        }
+
+        fetchTodos();
+    </script>
+</body>
+</html>
